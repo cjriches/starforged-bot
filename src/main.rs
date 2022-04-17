@@ -8,7 +8,7 @@ use serenity::framework::standard::{
 };
 use serenity::model::channel::Message;
 
-use crate::rolls::{ActionRoll, ProgressRoll};
+use crate::rolls::{ActionRoll, CustomRoll, OracleRoll, ProgressRoll, RollSpec};
 
 mod rolls;
 
@@ -19,7 +19,7 @@ const MISSING_TOKEN_ERROR: &str = "Missing STARFORGED_DISCORD_TOKEN environment 
 
 /// The group of all our commands.
 #[group]
-#[commands(ping, action_roll, progress_roll)]
+#[commands(ping, action_roll, progress_roll, oracle_roll, custom_roll)]
 struct Commands;
 
 /// Our request handler.
@@ -71,7 +71,7 @@ async fn ping(ctx: &Context, msg: &Message) -> CommandResult {
 
 /// Perform an action roll.
 #[command]
-#[aliases("ar", "a")]
+#[aliases("move", "action", "ar", "a")]
 async fn action_roll(ctx: &Context, msg: &Message) -> CommandResult {
     // Parse the roll.
     let args = msg.content.split_whitespace().skip(1).collect::<Vec<_>>();
@@ -85,7 +85,7 @@ async fn action_roll(ctx: &Context, msg: &Message) -> CommandResult {
                 Ok(v) => bonus += v,
                 Err(_) => {
                     let response = format!("Invalid bonus: {}", arg);
-                    send!(ctx, msg, response).await?;
+                    msg.reply(ctx, response).await?;
                     return Ok(());
                 }
             }
@@ -106,7 +106,7 @@ async fn action_roll(ctx: &Context, msg: &Message) -> CommandResult {
 
 /// Perform a progress roll.
 #[command]
-#[aliases("pr", "p")]
+#[aliases("progress", "pr", "p")]
 async fn progress_roll(ctx: &Context, msg: &Message) -> CommandResult {
     // Parse the roll.
     let args = msg.content.split_whitespace().skip(1).collect::<Vec<_>>();
@@ -116,20 +116,76 @@ async fn progress_roll(ctx: &Context, msg: &Message) -> CommandResult {
             let bonus = args[0].parse::<u32>();
             if bonus.is_err() {
                 let response = format!("Invalid progress: {}", args[0]);
-                send!(ctx, msg, response).await?;
+                msg.reply(ctx, response).await?;
                 return Ok(());
             }
             Some(bonus.unwrap())
         }
         n => {
-            let response = format!("Too many arguments (expected 0 or 1, got {}", n);
-            send!(ctx, msg, response).await?;
+            let response = format!("Too many arguments (expected 0 or 1, got {})", n);
+            msg.reply(ctx, response).await?;
             return Ok(());
         }
     };
 
     // Make the roll.
     let roll = ProgressRoll::random(bonus);
+    let response = roll.to_string();
+
+    // Delete the message and respond to it.
+    msg.delete(ctx).await?;
+    send!(ctx, msg, response).await?;
+
+    Ok(())
+}
+
+/// Perform an oracle roll.
+#[command]
+#[aliases("oracle", "or", "o")]
+async fn oracle_roll(ctx: &Context, msg: &Message) -> CommandResult {
+    // Parse the roll.
+    let num_args = msg.content.split_whitespace().skip(1).count();
+    if num_args > 0 {
+        let response = format!("Too many arguments (expected 0, got {})", num_args);
+        msg.reply(ctx, response).await?;
+        return Ok(());
+    }
+
+    // Make the roll.
+    let roll = OracleRoll::random();
+    let response = roll.to_string();
+
+    // Delete the message and respond to it.
+    msg.delete(ctx).await?;
+    send!(ctx, msg, response).await?;
+
+    Ok(())
+}
+
+/// Perform a custom roll.
+#[command]
+#[aliases("roll", "r")]
+async fn custom_roll(ctx: &Context, msg: &Message) -> CommandResult {
+    // Parse the roll.
+    let mut specs: Vec<RollSpec> = Vec::new();
+    for arg in msg.content.split_whitespace().skip(1) {
+        let spec = arg.parse();
+        if let Ok(spec) = spec {
+            specs.push(spec);
+        } else {
+            let response = format!("Invalid argument: {}", arg);
+            msg.reply(ctx, response).await?;
+            return Ok(());
+        }
+    }
+    if specs.is_empty() {
+        let response = "Not enough arguments (expected 1+, got 0)";
+        msg.reply(ctx, response).await?;
+        return Ok(());
+    }
+
+    // Make the roll.
+    let roll = CustomRoll::random(specs);
     let response = roll.to_string();
 
     // Delete the message and respond to it.

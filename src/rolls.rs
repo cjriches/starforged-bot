@@ -1,5 +1,6 @@
 use std::cmp::min;
 use std::fmt::{Display, Formatter};
+use std::str::FromStr;
 
 use rand::Rng;
 
@@ -151,20 +152,22 @@ impl ProgressRoll {
 impl Display for ProgressRoll {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         if self.bonus.is_some() {
-            write!(f,
-                   "***Progress Roll: {} vs [{}] [{}] ({}{})***",
-                   self.score().unwrap(),
-                   self.challenge_dice[0],
-                   self.challenge_dice[1],
-                   if self.is_match() { "Matched " } else { "" },
-                   self.outcome().unwrap()
+            write!(
+                f,
+                "***Progress Roll: {} vs [{}] [{}] ({}{})***",
+                self.score().unwrap(),
+                self.challenge_dice[0],
+                self.challenge_dice[1],
+                if self.is_match() { "Matched " } else { "" },
+                self.outcome().unwrap()
             )
         } else {
-            write!(f,
-                   "***Progress Roll: [{}] [{}]{}***",
-                   self.challenge_dice[0],
-                   self.challenge_dice[1],
-                   if self.is_match() { " (Match)" } else { "" }
+            write!(
+                f,
+                "***Progress Roll: [{}] [{}]{}***",
+                self.challenge_dice[0],
+                self.challenge_dice[1],
+                if self.is_match() { " (Match)" } else { "" }
             )
         }
     }
@@ -199,6 +202,15 @@ pub struct RollSpec {
     pub bonus: u32,
 }
 
+impl FromStr for RollSpec {
+    type Err = ();
+
+    /// Parse a `RollSpec` from a string like `3d6+5`.
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        todo!()
+    }
+}
+
 /// The result of a custom roll.
 #[derive(Debug, Clone)]
 pub struct CustomRoll {
@@ -218,10 +230,7 @@ impl CustomRoll {
                 rolls.push(rng.gen_range(1..=spec.dice_size));
             }
         }
-        Self {
-            rolls,
-            bonuses,
-        }
+        Self { rolls, bonuses }
     }
 }
 
