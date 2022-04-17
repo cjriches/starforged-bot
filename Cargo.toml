@@ -3,6 +3,9 @@ name = "starforged-bot"
 version = "0.1.0"
 edition = "2021"
 
+[dependencies.logos]
+version = "0.12.0"
+
 [dependencies.rand]
 version = "0.8.5"
 

@@ -207,7 +207,7 @@ impl FromStr for RollSpec {
 
     /// Parse a `RollSpec` from a string like `3d6+5`.
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        todo!()
+        crate::parse_roll_spec::parse(s)
     }
 }
 
@@ -225,7 +225,9 @@ impl CustomRoll {
         let mut rolls = Vec::new();
         let mut bonuses = Vec::new();
         for spec in specs {
-            bonuses.push(spec.bonus);
+            if spec.bonus > 0 {
+                bonuses.push(spec.bonus);
+            }
             for _ in 0..spec.num_dice {
                 rolls.push(rng.gen_range(1..=spec.dice_size));
             }

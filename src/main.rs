@@ -10,6 +10,7 @@ use serenity::model::channel::Message;
 
 use crate::rolls::{ActionRoll, CustomRoll, OracleRoll, ProgressRoll, RollSpec};
 
+mod parse_roll_spec;
 mod rolls;
 
 const DEFAULT_COMMAND_PREFIX: &str = "/";
@@ -188,9 +189,8 @@ async fn custom_roll(ctx: &Context, msg: &Message) -> CommandResult {
     let roll = CustomRoll::random(specs);
     let response = roll.to_string();
 
-    // Delete the message and respond to it.
-    msg.delete(ctx).await?;
-    send!(ctx, msg, response).await?;
+    // Keep the original message as proof of the roll spec.
+    msg.reply(ctx, response).await?;
 
     Ok(())
 }
