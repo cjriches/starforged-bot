@@ -8,6 +8,10 @@ use serenity::framework::standard::{
 };
 use serenity::model::channel::Message;
 
+use crate::rolls::{ActionRoll, ProgressRoll};
+
+mod rolls;
+
 const DEFAULT_COMMAND_PREFIX: &str = "/";
 const COMMAND_PREFIX_ENVVAR: &str = "STARFORGED_COMMAND_PREFIX";
 const TOKEN_ENVVAR: &str = "STARFORGED_DISCORD_TOKEN";
@@ -15,7 +19,7 @@ const MISSING_TOKEN_ERROR: &str = "Missing STARFORGED_DISCORD_TOKEN environment 
 
 /// The group of all our commands.
 #[group]
-#[commands(ping)]
+#[commands(ping, action_roll, progress_roll)]
 struct Commands;
 
 /// Our request handler.
@@ -51,8 +55,86 @@ async fn main() {
     }
 }
 
+/// A macro for sending a message.
+macro_rules! send {
+    ($ctx:expr, $msg:expr, $content:expr) => {
+        $msg.channel_id.send_message($ctx, |m| m.content($content))
+    };
+}
+
+/// Simple ping command to check the bot is online.
 #[command]
 async fn ping(ctx: &Context, msg: &Message) -> CommandResult {
     msg.reply(ctx, "Pong!").await?;
+    Ok(())
+}
+
+/// Perform an action roll.
+#[command]
+#[aliases("ar", "a")]
+async fn action_roll(ctx: &Context, msg: &Message) -> CommandResult {
+    // Parse the roll.
+    let args = msg.content.split_whitespace().skip(1).collect::<Vec<_>>();
+    let bonus = if args.is_empty() {
+        None
+    } else {
+        let mut bonus = 0;
+        for arg in args {
+            let val = arg.parse::<u32>();
+            match val {
+                Ok(v) => bonus += v,
+                Err(_) => {
+                    let response = format!("Invalid bonus: {}", arg);
+                    send!(ctx, msg, response).await?;
+                    return Ok(());
+                }
+            }
+        }
+        Some(bonus)
+    };
+
+    // Make the roll.
+    let roll = ActionRoll::random(bonus);
+    let response = roll.to_string();
+
+    // Delete the message and respond to it.
+    msg.delete(ctx).await?;
+    send!(ctx, msg, response).await?;
+
+    Ok(())
+}
+
+/// Perform a progress roll.
+#[command]
+#[aliases("pr", "p")]
+async fn progress_roll(ctx: &Context, msg: &Message) -> CommandResult {
+    // Parse the roll.
+    let args = msg.content.split_whitespace().skip(1).collect::<Vec<_>>();
+    let bonus = match args.len() {
+        0 => None,
+        1 => {
+            let bonus = args[0].parse::<u32>();
+            if bonus.is_err() {
+                let response = format!("Invalid progress: {}", args[0]);
+                send!(ctx, msg, response).await?;
+                return Ok(());
+            }
+            Some(bonus.unwrap())
+        }
+        n => {
+            let response = format!("Too many arguments (expected 0 or 1, got {}", n);
+            send!(ctx, msg, response).await?;
+            return Ok(());
+        }
+    };
+
+    // Make the roll.
+    let roll = ProgressRoll::random(bonus);
+    let response = roll.to_string();
+
+    // Delete the message and respond to it.
+    msg.delete(ctx).await?;
+    send!(ctx, msg, response).await?;
+
     Ok(())
 }
