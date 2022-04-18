@@ -20,7 +20,7 @@ const MISSING_TOKEN_ERROR: &str = "Missing STARFORGED_DISCORD_TOKEN environment 
 
 /// The group of all our commands.
 #[group]
-#[commands(ping, action_roll, progress_roll, oracle_roll, custom_roll)]
+#[commands(ping, help, action_roll, progress_roll, oracle_roll, custom_roll)]
 struct Commands;
 
 /// Our request handler.
@@ -191,6 +191,40 @@ async fn custom_roll(ctx: &Context, msg: &Message) -> CommandResult {
 
     // Keep the original message as proof of the roll spec.
     msg.reply(ctx, response).await?;
+
+    Ok(())
+}
+
+/// Display a help message.
+#[command]
+#[aliases("h")]
+async fn help(ctx: &Context, msg: &Message) -> CommandResult {
+    const HELP_TEXT: &str = "***Starforged Bot Guide***
+*This bot helps you make all the rolls you need. It supports the following commands:*
+
+Action Rolls (`/move`, `/action`, `/ar`, `/a`):
+   Roll an action d6 against the challenge 2d10.
+   Optionally specify a list of bonuses (i.e. stats and adds); \
+this will calculate your total score and tell you the outcome.
+   Example: `/action 3 2`
+
+Progress Rolls (`/progress`, `/pr`, `/p`):
+   Roll your progress against the challenge 2d10.
+   Optionally specify your progress amount (i.e. the number of \
+filled boxes); this will tell you the outcome.
+   Example: `/p 9`
+
+Oracle Rolls (`/oracle`, `/or`, `/o`):
+   Roll a d100 to pick from an oracle table.
+
+Custom rolls (`/roll`, `/r`):
+   Roll any dice and bonuses you want, using the format `XdY+Z`.
+   You may specify multiple dice; as such do not put spaces around any `+`.
+   Example: `/r 2d4+1 d6 4d10`";
+
+    // Delete the message and respond to it.
+    msg.delete(ctx).await?;
+    send!(ctx, msg, HELP_TEXT).await?;
 
     Ok(())
 }
