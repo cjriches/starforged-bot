@@ -79,7 +79,7 @@ impl Display for ActionRoll {
         if let Some(bonus) = self.bonus {
             write!(
                 f,
-                "***Action Roll: {}+{} = {} vs [{}] [{}] ({}{})***",
+                "***Action Roll: [{}]+{} = {} vs [{}] [{}] ({}{})***",
                 self.action_die,
                 bonus,
                 self.score().unwrap(),
@@ -91,7 +91,7 @@ impl Display for ActionRoll {
         } else {
             write!(
                 f,
-                "***Action Roll: {} vs [{}] [{}]{}***",
+                "***Action Roll: [{}] vs [{}] [{}]{}***",
                 self.action_die,
                 self.challenge_dice[0],
                 self.challenge_dice[1],
