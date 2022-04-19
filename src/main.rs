@@ -233,11 +233,16 @@ filled boxes); this will tell you the outcome.
 
 Oracle Rolls (`/oracle`, `/or`, `/o`):
    Roll a d100 to pick from an oracle table.
+   You may specify a number to roll multiple oracles at once.
+   Example: `/oracle 3`
 
 Custom rolls (`/roll`, `/r`):
    Roll any dice and bonuses you want, using the format `XdY+Z`.
    You may specify multiple dice; as such do not put spaces around any `+`.
-   Example: `/r 2d4+1 d6 4d10`";
+   Example: `/r 2d4+1 d6 4d10`
+
+Note that all numbers are limited to 255, i.e. you cannot roll 2d1000 \
+or ask for 300 oracle rolls.";
 
     // Delete the message and respond to it.
     msg.delete(ctx).await?;
