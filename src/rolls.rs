@@ -4,6 +4,8 @@ use std::str::FromStr;
 
 use rand::Rng;
 
+use crate::{InputType, OutputType};
+
 /// The outcome of an action or progress roll.
 #[derive(Debug, Clone, Copy)]
 pub enum Outcome {
@@ -26,14 +28,14 @@ impl Display for Outcome {
 /// The result of an action roll.
 #[derive(Debug, Clone, Copy)]
 pub struct ActionRoll {
-    pub action_die: u32,
-    pub bonus: Option<u32>,
-    pub challenge_dice: [u32; 2],
+    pub action_die: OutputType,
+    pub bonus: Option<InputType>,
+    pub challenge_dice: [OutputType; 2],
 }
 
 impl ActionRoll {
     /// Generate a random action roll.
-    pub fn random(bonus: impl Into<Option<u32>>) -> Self {
+    pub fn random(bonus: impl Into<Option<InputType>>) -> Self {
         let mut rng = rand::thread_rng();
         let action_die = rng.gen_range(1..=6);
         let challenge_dice = [rng.gen_range(1..=10), rng.gen_range(1..=10)];
@@ -46,8 +48,8 @@ impl ActionRoll {
 
     /// What is the total score of this roll?
     /// Only known if the bonus is known.
-    pub fn score(&self) -> Option<u32> {
-        Some(min(self.action_die + self.bonus?, 10))
+    pub fn score(&self) -> Option<OutputType> {
+        Some(min(self.action_die + u32::from(self.bonus?), 10))
     }
 
     /// What is the outcome of this roll?
@@ -104,13 +106,13 @@ impl Display for ActionRoll {
 /// The result of a progress roll.
 #[derive(Debug, Clone, Copy)]
 pub struct ProgressRoll {
-    pub bonus: Option<u32>,
-    pub challenge_dice: [u32; 2],
+    pub bonus: Option<InputType>,
+    pub challenge_dice: [OutputType; 2],
 }
 
 impl ProgressRoll {
     /// Generate a random progress roll.
-    pub fn random(bonus: impl Into<Option<u32>>) -> Self {
+    pub fn random(bonus: impl Into<Option<InputType>>) -> Self {
         let mut rng = rand::thread_rng();
         let challenge_dice = [rng.gen_range(1..=10), rng.gen_range(1..=10)];
         Self {
@@ -121,8 +123,8 @@ impl ProgressRoll {
 
     /// What is the total score of this roll?
     /// Only known if the bonus is known.
-    pub fn score(&self) -> Option<u32> {
-        Some(min(self.bonus?, 10))
+    pub fn score(&self) -> Option<OutputType> {
+        Some(min(self.bonus?.into(), 10))
     }
 
     /// What is the outcome of this roll?
@@ -174,32 +176,40 @@ impl Display for ProgressRoll {
 }
 
 /// The result of an oracle roll.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct OracleRoll {
-    pub outcome: u32,
+    pub outcomes: Vec<OutputType>,
 }
 
 impl OracleRoll {
     /// Generate a random oracle roll.
-    pub fn random() -> Self {
+    pub fn random(num: usize) -> Self {
         let mut rng = rand::thread_rng();
-        let outcome = rng.gen_range(1..=100);
-        Self { outcome }
+        let mut outcomes = Vec::with_capacity(num);
+        for _ in 0..num {
+            outcomes.push(rng.gen_range(1..=100));
+        }
+        Self { outcomes }
     }
 }
 
 impl Display for OracleRoll {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "***Oracle Roll: [{}]***", self.outcome)
+        let mut string = vec!["Oracle Roll:".to_string()];
+        for outcome in &self.outcomes {
+            string.push(format!(" [{}]", outcome));
+        }
+
+        write!(f, "***{}***", string.join(""))
     }
 }
 
 /// The specification for a custom roll.
 #[derive(Debug, Clone, Copy)]
 pub struct RollSpec {
-    pub num_dice: u32,
-    pub dice_size: u32,
-    pub bonus: u32,
+    pub num_dice: InputType,
+    pub dice_size: InputType,
+    pub bonus: InputType,
 }
 
 impl FromStr for RollSpec {
@@ -214,8 +224,8 @@ impl FromStr for RollSpec {
 /// The result of a custom roll.
 #[derive(Debug, Clone)]
 pub struct CustomRoll {
-    pub rolls: Vec<u32>,
-    pub bonuses: Vec<u32>,
+    pub rolls: Vec<OutputType>,
+    pub bonuses: Vec<OutputType>,
 }
 
 impl CustomRoll {
@@ -226,10 +236,10 @@ impl CustomRoll {
         let mut bonuses = Vec::new();
         for spec in specs {
             if spec.bonus > 0 {
-                bonuses.push(spec.bonus);
+                bonuses.push(spec.bonus.into());
             }
             for _ in 0..spec.num_dice {
-                rolls.push(rng.gen_range(1..=spec.dice_size));
+                rolls.push(rng.gen_range(1..=spec.dice_size.into()));
             }
         }
         Self { rolls, bonuses }

@@ -1,13 +1,13 @@
 use logos::{Lexer, Logos};
 
-use crate::RollSpec;
+use crate::{InputType, RollSpec};
 
 /// A token that we use to parse.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Logos)]
 enum Token {
     /// Single or multi-digit numbers.
     #[regex(r"\d+", |lex| lex.slice().parse())]
-    Number(u32),
+    Number(InputType),
 
     /// The 'd' in '2d4+5' (case-insensitive).
     #[regex(r"d|D")]

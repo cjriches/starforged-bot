@@ -13,6 +13,11 @@ use crate::rolls::{ActionRoll, CustomRoll, OracleRoll, ProgressRoll, RollSpec};
 mod parse_roll_spec;
 mod rolls;
 
+/// The numeric type used when parsing inputs.
+type InputType = u8;
+/// The numeric type used for intermediate computations and outputs.
+type OutputType = u32;
+
 const DEFAULT_COMMAND_PREFIX: &str = "/";
 const COMMAND_PREFIX_ENVVAR: &str = "STARFORGED_COMMAND_PREFIX";
 const TOKEN_ENVVAR: &str = "STARFORGED_DISCORD_TOKEN";
@@ -81,7 +86,7 @@ async fn action_roll(ctx: &Context, msg: &Message) -> CommandResult {
     } else {
         let mut bonus = 0;
         for arg in args {
-            let val = arg.parse::<u32>();
+            let val = arg.parse::<InputType>();
             match val {
                 Ok(v) => bonus += v,
                 Err(_) => {
@@ -114,7 +119,7 @@ async fn progress_roll(ctx: &Context, msg: &Message) -> CommandResult {
     let bonus = match args.len() {
         0 => None,
         1 => {
-            let bonus = args[0].parse::<u32>();
+            let bonus = args[0].parse::<InputType>();
             if bonus.is_err() {
                 let response = format!("Invalid progress: {}", args[0]);
                 msg.reply(ctx, response).await?;
@@ -145,15 +150,27 @@ async fn progress_roll(ctx: &Context, msg: &Message) -> CommandResult {
 #[aliases("oracle", "or", "o")]
 async fn oracle_roll(ctx: &Context, msg: &Message) -> CommandResult {
     // Parse the roll.
-    let num_args = msg.content.split_whitespace().skip(1).count();
-    if num_args > 0 {
-        let response = format!("Too many arguments (expected 0, got {})", num_args);
-        msg.reply(ctx, response).await?;
-        return Ok(());
-    }
+    let args = msg.content.split_whitespace().skip(1).collect::<Vec<_>>();
+    let num_rolls = match args.len() {
+        0 => 1,
+        1 => {
+            let num_rolls = args[0].parse::<InputType>();
+            if num_rolls.is_err() {
+                let response = format!("Invalid number of rolls: {}", args[0]);
+                msg.reply(ctx, response).await?;
+                return Ok(());
+            }
+            num_rolls.unwrap()
+        }
+        n => {
+            let response = format!("Too many arguments (expected 0 or 1, got {})", n);
+            msg.reply(ctx, response).await?;
+            return Ok(());
+        }
+    };
 
     // Make the roll.
-    let roll = OracleRoll::random();
+    let roll = OracleRoll::random(num_rolls.into());
     let response = roll.to_string();
 
     // Delete the message and respond to it.
