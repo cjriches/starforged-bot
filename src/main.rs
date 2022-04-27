@@ -8,7 +8,7 @@ use serenity::framework::standard::{
 };
 use serenity::model::channel::Message;
 
-use crate::rolls::{ActionRoll, CustomRoll, OracleRoll, ProgressRoll, RollSpec};
+use crate::rolls::{ActionRoll, CustomRoll, OracleRoll, ProgressRoll};
 
 mod parse_roll_spec;
 mod rolls;
@@ -185,29 +185,31 @@ async fn oracle_roll(ctx: &Context, msg: &Message) -> CommandResult {
 #[aliases("roll", "r")]
 async fn custom_roll(ctx: &Context, msg: &Message) -> CommandResult {
     // Parse the roll.
-    let mut specs: Vec<RollSpec> = Vec::new();
-    for arg in msg.content.split_whitespace().skip(1) {
-        let spec = arg.parse();
-        if let Ok(spec) = spec {
-            specs.push(spec);
+    let spec_raw = {
+        let arg = msg.content.split_once(' ');
+        if let Some((_, spec_raw)) = arg {
+            spec_raw.trim()
         } else {
-            let response = format!("Invalid argument: {}", arg);
+            let response = "Not enough arguments (expected 1+, got 0)";
             msg.reply(ctx, response).await?;
             return Ok(());
         }
-    }
-    if specs.is_empty() {
-        let response = "Not enough arguments (expected 1+, got 0)";
+    };
+    let spec = if let Ok(spec) = spec_raw.parse() {
+        spec
+    } else {
+        let response = "Invalid roll specification";
         msg.reply(ctx, response).await?;
         return Ok(());
-    }
+    };
 
     // Make the roll.
-    let roll = CustomRoll::random(specs);
+    let roll = CustomRoll::random(spec);
     let response = roll.to_string();
 
-    // Keep the original message as proof of the roll spec.
-    msg.reply(ctx, response).await?;
+    // Delete the message and respond to it.
+    msg.delete(ctx).await?;
+    send!(ctx, msg, response).await?;
 
     Ok(())
 }
@@ -237,9 +239,9 @@ Oracle Rolls (`!oracle`, `!or`, `!o`):
    Example: `!oracle 3`
 
 Custom rolls (`!roll`, `!r`):
-   Roll any dice and bonuses you want, using the format `XdY+Z`.
-   You may specify multiple dice; as such do not put spaces around any `+`.
-   Example: `!r 2d4+1 d6 4d10`
+   Roll any dice and bonuses you want, using the format `XdY + Z`.
+   You may specify multiple dice and multiple bonuses.
+   Example: `!r 2d4 + 1 + d6 + 4d10`
 
 Note that all numbers are limited to 255, i.e. you cannot roll 2d1000 \
 or ask for 300 oracle rolls.";
