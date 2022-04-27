@@ -18,7 +18,7 @@ type InputType = u8;
 /// The numeric type used for intermediate computations and outputs.
 type OutputType = u32;
 
-const DEFAULT_COMMAND_PREFIX: &str = "/";
+const DEFAULT_COMMAND_PREFIX: &str = "!";
 const COMMAND_PREFIX_ENVVAR: &str = "STARFORGED_COMMAND_PREFIX";
 const TOKEN_ENVVAR: &str = "STARFORGED_DISCORD_TOKEN";
 const MISSING_TOKEN_ERROR: &str = "Missing STARFORGED_DISCORD_TOKEN environment variable";
@@ -219,27 +219,27 @@ async fn help(ctx: &Context, msg: &Message) -> CommandResult {
     const HELP_TEXT: &str = "***Starforged Bot Guide***
 *This bot helps you make all the rolls you need. It supports the following commands:*
 
-Action Rolls (`/move`, `/action`, `/ar`, `/a`):
+Action Rolls (`!move`, `!action`, `!ar`, `!a`):
    Roll an action d6 against the challenge 2d10.
    Optionally specify a list of bonuses (i.e. stats and adds); \
 this will calculate your total score and tell you the outcome.
-   Example: `/action 3 2`
+   Example: `!action 3 2`
 
-Progress Rolls (`/progress`, `/pr`, `/p`):
+Progress Rolls (`!progress`, `!pr`, `!p`):
    Roll your progress against the challenge 2d10.
    Optionally specify your progress amount (i.e. the number of \
 filled boxes); this will tell you the outcome.
-   Example: `/p 9`
+   Example: `!p 9`
 
-Oracle Rolls (`/oracle`, `/or`, `/o`):
+Oracle Rolls (`!oracle`, `!or`, `!o`):
    Roll a d100 to pick from an oracle table.
    You may specify a number to roll multiple oracles at once.
-   Example: `/oracle 3`
+   Example: `!oracle 3`
 
-Custom rolls (`/roll`, `/r`):
+Custom rolls (`!roll`, `!r`):
    Roll any dice and bonuses you want, using the format `XdY+Z`.
    You may specify multiple dice; as such do not put spaces around any `+`.
-   Example: `/r 2d4+1 d6 4d10`
+   Example: `!r 2d4+1 d6 4d10`
 
 Note that all numbers are limited to 255, i.e. you cannot roll 2d1000 \
 or ask for 300 oracle rolls.";
