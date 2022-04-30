@@ -8,6 +8,13 @@ license = "MIT OR Apache-2.0"
 readme = "../README.md"
 repository = "https://github.com/cjriches/starforged-bot"
 
+[features]
+download = ["chrono"]
+
+[dependencies.chrono]
+version = "0.4.19"
+optional = true
+
 [dependencies.logos]
 version = "0.12.0"
 

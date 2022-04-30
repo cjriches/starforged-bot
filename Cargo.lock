@@ -120,6 +120,7 @@ dependencies = [
  "num-integer",
  "num-traits",
  "serde",
+ "time",
  "winapi",
 ]
 
@@ -969,6 +970,7 @@ checksum = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"
 name = "starforged-bot"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "logos",
  "rand 0.8.5",
  "serenity",
@@ -990,6 +992,16 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-xid",
+]
+
+[[package]]
+name = "time"
+version = "0.1.43"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ca8a50ef2360fbd1eeb0ecd46795a87a19024eb4b53c5dc916ca1fd95fe62438"
+dependencies = [
+ "libc",
+ "winapi",
 ]
 
 [[package]]

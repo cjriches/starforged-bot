@@ -25,7 +25,15 @@ const MISSING_TOKEN_ERROR: &str = "Missing STARFORGED_DISCORD_TOKEN environment 
 
 /// The group of all our commands.
 #[group]
-#[commands(ping, help, action_roll, progress_roll, oracle_roll, custom_roll)]
+#[commands(
+    ping,
+    help,
+    action_roll,
+    progress_roll,
+    oracle_roll,
+    custom_roll,
+    download
+)]
 struct Commands;
 
 /// Our request handler.
@@ -214,6 +222,61 @@ async fn custom_roll(ctx: &Context, msg: &Message) -> CommandResult {
     Ok(())
 }
 
+/// Provide the channel contents as a file to download.
+#[command]
+async fn download(ctx: &Context, msg: &Message) -> CommandResult {
+    #[cfg(not(feature = "download"))]
+    {
+        let response = "This command is disabled.";
+        msg.reply(ctx, response).await?;
+        return Ok(());
+    }
+    #[cfg(feature = "download")]
+    {
+        use chrono::Utc;
+        use serenity::futures::StreamExt;
+
+        // Check arguments.
+        if msg.content.split_whitespace().count() > 1 {
+            let response = "Unexpected argument(s)";
+            msg.reply(ctx, response).await?;
+            return Ok(());
+        }
+
+        // Read all the past messages.
+        let mut all_messages = Vec::new();
+        let mut message_stream = msg.channel_id.messages_iter(ctx).boxed();
+        while let Some(message) = message_stream.next().await {
+            let message = message?;
+            // Ignore empty messages and this command itself.
+            if !(message.content.is_empty() || message.content.trim().ends_with("download")) {
+                all_messages.push(message.content);
+            }
+        }
+
+        // Combine them into a single buffer.
+        all_messages.reverse();
+        let response = all_messages.join("\n");
+        let channel_name = msg
+            .channel_id
+            .name(ctx)
+            .await
+            .unwrap_or_else(|| "channel".to_string());
+        let now = Utc::now().format("%Y-%m-%d-%H-%M-%S");
+        let filename = format!("{}-{}.txt", channel_name, now);
+
+        // Delete the message and respond to it.
+        msg.delete(ctx).await?;
+        msg.channel_id
+            .send_message(ctx, |cfg| {
+                cfg.add_file((response.as_bytes(), filename.as_str()))
+            })
+            .await?;
+
+        Ok(())
+    }
+}
+
 /// Display a help message.
 #[command]
 #[aliases("h")]
@@ -244,7 +307,16 @@ Custom rolls (`!roll`, `!r`):
    Example: `!r 2d4 + 1 + d6 + 4d10`
 
 Note that all numbers are limited to 255, i.e. you cannot roll 2d1000 \
-or ask for 300 oracle rolls.";
+or ask for 300 oracle rolls.
+
+*Other commands:*
+
+Help (`!help`, `!h`):
+   Display this message.
+
+Download (`!download`):
+   Download the entire history of the channel as a text file.
+   This file is created transiently upon request and is not stored by the bot.";
 
     // Delete the message and respond to it.
     msg.delete(ctx).await?;
