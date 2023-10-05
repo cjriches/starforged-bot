@@ -16,13 +16,13 @@ version = "0.4.19"
 optional = true
 
 [dependencies.logos]
-version = "0.12.0"
+version = "0.13.0"
 
 [dependencies.rand]
 version = "0.8.5"
 
 [dependencies.serenity]
-version = "0.10.10"
+version = "0.11.6"
 
 [dependencies.tokio]
 version = "1.17.0"

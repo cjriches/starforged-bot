@@ -6,7 +6,7 @@ use serenity::framework::standard::{
     macros::{command, group},
     CommandResult, Configuration, StandardFramework,
 };
-use serenity::model::channel::Message;
+use serenity::model::{channel::Message, gateway::GatewayIntents};
 
 use crate::rolls::{ActionRoll, CustomRoll, OracleRoll, ProgressRoll};
 
@@ -57,11 +57,14 @@ async fn main() {
 
     // Create our client and log in.
     let token = env::var(TOKEN_ENVVAR).expect(MISSING_TOKEN_ERROR);
-    let mut client = Client::builder(token)
-        .event_handler(Handler)
-        .framework(framework)
-        .await
-        .expect("Error creating client");
+    let mut client = Client::builder(
+        token,
+        GatewayIntents::GUILD_MESSAGES | GatewayIntents::MESSAGE_CONTENT,
+    )
+    .event_handler(Handler)
+    .framework(framework)
+    .await
+    .expect("Error creating client");
 
     // Enter main command loop.
     if let Err(e) = client.start().await {

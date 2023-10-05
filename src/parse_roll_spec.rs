@@ -21,26 +21,19 @@ fn parse_xdy(slice: &str) -> Option<(InputType, InputType)> {
 
 /// A token that we use to parse.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Logos)]
+#[logos(skip r"\s+")]
 enum Token {
     /// An `XdY` roll specification.
     #[regex(r"\d*(d|D)\d+", |lex| parse_xdy(lex.slice()))]
     XdY((InputType, InputType)),
 
     /// A bonus specification.
-    #[regex(r"\d+", |lex| lex.slice().parse())]
+    #[regex(r"\d+", |lex| lex.slice().parse().ok())]
     Bonus(InputType),
 
     /// The `+` character.
     #[token("+")]
     Plus,
-
-    /// Whitespace (ignored)
-    #[regex(r"\s+", logos::skip)]
-    Whitespace,
-
-    /// Catch-all for anything else.
-    #[error]
-    Error,
 }
 
 /// Parse a `RollSpec` from a string slice.
@@ -52,28 +45,26 @@ pub fn parse(input: &str) -> Result<RollSpec, ()> {
     while let Some(token) = lex.next() {
         // Get the next die or bonus.
         match token {
-            Token::XdY((count, size)) => {
+            Ok(Token::XdY((count, size))) => {
                 for _ in 0..count {
                     dice.push(size);
                 }
             }
-            Token::Bonus(bonus) => {
+            Ok(Token::Bonus(bonus)) => {
                 bonuses.push(bonus);
             }
-            Token::Plus => {
+            Ok(Token::Plus) => {
                 return Err(());
             }
-            Token::Whitespace => {
-                unreachable!() // Whitespace tokens should be skipped.
-            }
-            Token::Error => {
+            Err(_) => {
                 return Err(());
             }
         }
         // If there are more tokens, we must see a plus before anything else.
         if let Some(token) = lex.next() {
-            if token != Token::Plus {
-                return Err(());
+            match token {
+                Ok(Token::Plus) => {} // ok
+                _ => return Err(()),
             }
         }
     }
