@@ -12,18 +12,18 @@ repository = "https://github.com/cjriches/starforged-bot"
 download = ["chrono"]
 
 [dependencies.chrono]
-version = "0.4.19"
+version = "0.4"
 optional = true
 
 [dependencies.logos]
-version = "0.13.0"
+version = "0.14"
 
 [dependencies.rand]
-version = "0.8.5"
+version = "0.8"
 
 [dependencies.serenity]
-version = "0.11.6"
+version = "0.11"
 
 [dependencies.tokio]
-version = "1.17.0"
+version = "1"
 features = ["rt-multi-thread", "macros"]
